@@ -10,7 +10,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from database.models import Base
+from database.portfolio.models import Base
 from database.paycheck.models import PaycheckBase, Paycheck, PaycheckLineItem
 
 USE_TWOPHASE = False
