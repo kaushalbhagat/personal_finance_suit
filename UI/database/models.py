@@ -1,17 +1,15 @@
+
+from sqlmodel import SQLModel
 import enum
 from datetime import date
 from typing import List, Optional
 from decimal import Decimal
-from sqlalchemy import ForeignKey, MetaData, String, Numeric, Date, Enum, UniqueConstraint
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlmodel.ext.asyncio.session import AsyncSession
-from collections.abc import AsyncGenerator
-
+from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import UniqueConstraint
 
 # 1. Base Class for Models
-class Base(DeclarativeBase):
-    # metadata = MetaData()
-    pass
+class Base(SQLModel):
+    metadata = SQLModel.metadata.__class__() 
 
 # 2. Enums for Data Integrity
 class AccountType(str, enum.Enum):
@@ -31,90 +29,74 @@ class TransactionType(str, enum.Enum):
     SPLIT = "SPLIT"
 
 # 3. Account Model
-class Account(Base):
+class Account(Base, table=True):
     __tablename__ = "accounts"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    owner: Mapped[str] = mapped_column(String(100), nullable=False)
-    institute: Mapped[str] = mapped_column(String(100), nullable=False)
-    account_type: Mapped[AccountType] = mapped_column(Enum(AccountType), nullable=False)
-    initial_cash: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"))
-    current_cash: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"))
+    id: Optional[int] = Field(default=None, primary_key=True)
+    owner: str = Field(max_length=100)
+    institute: str = Field(max_length=100)
+    account_type: AccountType
+    initial_cash: Decimal = Field(default=Decimal("0.00"), max_digits=18, decimal_places=2)
+    current_cash: Decimal = Field(default=Decimal("0.00"), max_digits=18, decimal_places=2)
     
     # Relationships
-    transactions: Mapped[List["Transaction"]] = relationship(
-        "Transaction", back_populates="account", cascade="all, delete-orphan"
+    transactions: List["Transaction"] = Relationship(
+        back_populates="account",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
-    positions: Mapped[List["CurrentPosition"]] = relationship(
-        "CurrentPosition", back_populates="account", cascade="all, delete-orphan"
+    positions: List["CurrentPosition"] = Relationship(
+        back_populates="account",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
 
-    def __repr__(self) -> str:
-        return f"<Account(id={self.id}, owner='{self.owner}', type='{self.account_type.value}')>"
-
-# 4. Transaction Model (The Ledger)
-class Transaction(Base):
+# 4. Transaction Model
+class Transaction(Base, table=True):
     __tablename__ = "transactions"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
-    ticker: Mapped[str] = mapped_column(String(10), nullable=False, index=True) 
-    transaction_type: Mapped[TransactionType] = mapped_column(Enum(TransactionType), nullable=False)
-    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False) 
-    price_per_share: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
-    transaction_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    account_id: int = Field(foreign_key="accounts.id", index=True)
+    ticker: str = Field(max_length=10, index=True) 
+    transaction_type: TransactionType
+    quantity: Decimal = Field(max_digits=18, decimal_places=4) 
+    price_per_share: Decimal = Field(max_digits=18, decimal_places=4)
+    transaction_date: date = Field(index=True)
 
-    # Relationship back to the account
-    account: Mapped["Account"] = relationship("Account", back_populates="transactions")
+    account: Optional[Account] = Relationship(back_populates="transactions")
 
-    def __repr__(self) -> str:
-        return f"<Transaction({self.transaction_type.value} {self.quantity} {self.ticker} @ ${self.price_per_share})>"
-    
-# 5. Daily Snapshot Model (For lightning-fast timeline rendering)
-class DailySnapshot(Base):
+# 5. Daily Snapshot Model
+class DailySnapshot(Base, table=True):
     __tablename__ = "daily_snapshots"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
-    snapshot_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    account_id: int = Field(foreign_key="accounts.id", index=True)
+    snapshot_date: date = Field(index=True)
     
-    # Financial metrics for that specific day
-    total_value: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
-    cash_balance: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00")) 
-    unrealized_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"))
+    total_value: Decimal = Field(max_digits=18, decimal_places=2)
+    cash_balance: Decimal = Field(default=Decimal("0.00"), max_digits=18, decimal_places=2) 
+    unrealized_pnl: Decimal = Field(default=Decimal("0.00"), max_digits=18, decimal_places=2)
 
-    # Relationship back to the account
-    account: Mapped["Account"] = relationship("Account")
-    holdings = relationship("SnapshotHolding", backref="snapshot", cascade="all, delete-orphan")
+    account: Optional[Account] = Relationship()
 
-    def __repr__(self) -> str:
-        return f"<DailySnapshot(Account={self.account_id}, Date={self.snapshot_date}, Value=${self.total_value})>"
-
-class SnapshotHolding(Base):
+class SnapshotHolding(Base, table=True):
     __tablename__ = "snapshot_holdings"
     
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    snapshot_id: Mapped[int] = mapped_column(ForeignKey("daily_snapshots.id", ondelete="CASCADE"), nullable=False)
-    ticker: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
-    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    snapshot_id: int = Field(foreign_key="daily_snapshots.id")
+    ticker: str = Field(max_length=10, index=True)
+    quantity: Decimal = Field(max_digits=18, decimal_places=4)    
 
-# 6. Optimized Current Positions Lookup Table
-class CurrentPosition(Base):
+# 6. Current Positions Model
+class CurrentPosition(Base, table=True):
     __tablename__ = "current_positions"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
-    ticker: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
-    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0.0000"))
-    total_cost_basis: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"))
+    id: Optional[int] = Field(default=None, primary_key=True)
+    account_id: int = Field(foreign_key="accounts.id", index=True)
+    ticker: str = Field(max_length=10, index=True)
+    quantity: Decimal = Field(default=Decimal("0.0000"), max_digits=18, decimal_places=4)
+    total_cost_basis: Decimal = Field(default=Decimal("0.00"), max_digits=18, decimal_places=2)
 
-    # Relationship to cleanly map account information (e.g. pos.account.owner)
-    account: Mapped["Account"] = relationship("Account", back_populates="positions")
+    account: Optional[Account] = Relationship(back_populates="positions")
 
-    # Ensure a single account only has one entry per ticker
     __table_args__ = (
         UniqueConstraint("account_id", "ticker", name="uq_account_ticker"),
     )
-
-    def __repr__(self) -> str:
-        return f"<CurrentPosition(Account={self.account_id}, Ticker='{self.ticker}', Qty={self.quantity})>"
