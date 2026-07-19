@@ -2,7 +2,7 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from database import get_db
-from database.models import Account
+from database.portfolio.models import Account
 from util.portfolio.daily_snapshots import refresh_daily_snapshot, incremental_build_daily_snapshots
 
 def build_daily_snapshot_for_all_acounts():

@@ -3,7 +3,7 @@ import yfinance as yf
 from datetime import date
 from decimal import Decimal
 from sqlalchemy import select
-from database.models import Account, CurrentPosition, Transaction, TransactionType
+from database.portfolio.models import Account, CurrentPosition, Transaction, TransactionType
 
 class InsufficientFundsError(Exception):
     """Exception raised when a user tries to buy equity for more money than they have."""

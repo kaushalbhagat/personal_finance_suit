@@ -2,7 +2,7 @@ import csv
 from datetime import datetime
 from decimal import Decimal
 from database import get_db
-from database.models import Account, AccountType
+from database.portfolio.models import Account, AccountType
 from sqlalchemy import select
 
 from util.portfolio.transactions import execute_equity_transaction

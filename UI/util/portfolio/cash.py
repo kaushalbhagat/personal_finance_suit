@@ -3,7 +3,7 @@ import yfinance as yf
 from datetime import date
 from decimal import Decimal
 from sqlalchemy import select
-from database.models import Account, Transaction, TransactionType
+from database.portfolio.models import Account, Transaction, TransactionType
 
 
 def add_cash_tx(date_input: date, quantity_input: Decimal, selected_acct_id: int, session, action: str):

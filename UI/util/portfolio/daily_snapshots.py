@@ -4,7 +4,7 @@ import yfinance as yf
 from datetime import date, timedelta
 from decimal import Decimal
 from sqlalchemy import select
-from database.models import Account, Transaction, DailySnapshot, TransactionType, SnapshotHolding
+from database.portfolio.models import Account, Transaction, DailySnapshot, TransactionType, SnapshotHolding
 
 class SnapshotException(Exception):
     """Exception raised when a daily snapshot can't be created."""

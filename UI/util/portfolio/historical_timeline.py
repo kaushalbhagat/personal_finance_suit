@@ -1,5 +1,5 @@
 import pandas as pd
-from database.models import DailySnapshot
+from database.portfolio.models import DailySnapshot
 from sqlmodel import select
 
 def load_historical_timeline(session):

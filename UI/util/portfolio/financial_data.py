@@ -1,5 +1,5 @@
 import pandas as pd
-from database.models import Account, Transaction
+from database.portfolio.models import Account, Transaction
 from sqlmodel import select
 
 def load_financial_data(session):

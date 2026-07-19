@@ -1,5 +1,5 @@
 import pandas as pd
-from database.models import Account, CurrentPosition
+from database.portfolio.models import Account, CurrentPosition
 from sqlmodel import select
 import yfinance as yf
 

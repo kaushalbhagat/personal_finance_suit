@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 from sqlmodel import Session, select
-from database.models import Transaction, CurrentPosition, SnapshotHolding, TransactionType
+from database.portfolio.models import Transaction, CurrentPosition, SnapshotHolding, TransactionType
 
 def execute_stock_split(session: Session, ticker: str, split_ratio: float, split_date: date):
     """

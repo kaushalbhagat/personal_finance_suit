@@ -2,7 +2,7 @@ from decimal import Decimal
 import streamlit as st
 import pandas as pd
 from database.setup import get_db
-from database.models import Account
+from database.portfolio.models import Account
 from sqlmodel import select
 import yfinance as yf
 from datetime import date, timedelta
