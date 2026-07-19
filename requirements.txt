@@ -1,0 +1,16 @@
+mysql-connector-python
+pymysql
+alembic
+sqlmodel
+fastapi
+uvicorn
+fastapi
+streamlit
+aiomysql
+greenlet
+plotly
+streamlit-aggrid
+plaid-python
+python-dotenv
+pdfy
+pypdf
