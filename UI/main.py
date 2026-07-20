@@ -3,6 +3,7 @@ import streamlit as st
 # Define your pages with Material Icons
 # Browse icons at: https://fonts.google.com/icons
 home_page = st.Page("views/overview.py", title="Home", icon=":material/home:")
+
 dashboard_page = st.Page("views/budget/overall_dashboard.py", title="Cash Flow", icon=":material/dashboard:")
 expense_page = st.Page("views/budget/expense_dashboard.py", title="Expense", icon=":material/receipt:")
 income_page = st.Page("views/budget/income_dashboard.py", title="Income", icon=":material/money_bag:")
@@ -15,13 +16,15 @@ portfolio_snapshot_page = st.Page("views/portfolio/snapshot.py", title="Overview
 portfolio_accounts_page = st.Page("views/portfolio/accounts.py", title="Accounts", icon=":material/account_balance:")
 portfolio_transaction_page = st.Page("views/portfolio/transactions.py", title="Transactions", icon=":material/settings:")
 
+paycheck_overview = st.Page("views/paycheck/summary.py", title="Summary", icon=":material/settings:")
 
 # Initialize the navigation
 # pg = st.navigation([home_page, dashboard_page, settings_page]
 pg = st.navigation({
     "Personal Finance Hub": [home_page],
     "Budgeting": [dashboard_page, expense_page, income_page, accounts_page, category_management_page, mappings_management_page, institutes_management_page],
-    "Portfolio": [portfolio_snapshot_page, portfolio_accounts_page, portfolio_transaction_page]
+    "Portfolio": [portfolio_snapshot_page, portfolio_accounts_page, portfolio_transaction_page],
+    "Paycheck": [paycheck_overview]
 })
 
 

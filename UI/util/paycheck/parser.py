@@ -35,6 +35,9 @@ paycheck_data = {
             "Group Term Life": 0.0,
             "401K After-Tax": 0.0
         }
+    },
+    "RSU": {
+        "Class C Offset": 0.0
     }
 }
 
@@ -61,6 +64,10 @@ paycheck_reg_ex = {
         # Capture Group 1 = Current Value
         "reg-ex": r"\$(0\.00|\d{1,3},\d{3}\.\d{2}|\d{1,3}\.\d{2})",
         "position": 1
+    },
+    "RSU": {
+        "reg-ex": r"\$(0\.00|\d{1,3},\d{3}\.\d{2}|\d{1,3}\.\d{2})",
+        "position": 1        
     }
 }
 
@@ -134,6 +141,15 @@ def parse(path_to_file: str) -> str:
             populated_paycheck_data = parse_paycheck(paycheck_data, text)
             with get_paycheck_db() as session:
                 save_paycheck_to_db(populated_paycheck_data, session)
+
+
+def parse_without_saving(path_to_file: str) -> str:
+    reader = PdfReader(path_to_file)
+    page = reader.pages[0]
+    text = page.extract_text()
+    if text:
+        populated_paycheck_data = parse_paycheck(paycheck_data, text)  
+        pprint.pprint(populated_paycheck_data)
 
 
 if __name__ == "__main__":

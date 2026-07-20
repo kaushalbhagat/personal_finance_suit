@@ -31,7 +31,12 @@ def save_paycheck_to_db(parsed_data: dict, session: Session):
         line_items.append(
             PaycheckLineItem(paycheck_id=db_paycheck.id, category="Taxes", name=name, amount=amt)
         )
-        
+
+    for name, amt in parsed_data["RSU"].items():
+        line_items.append(
+            PaycheckLineItem(paycheck_id=db_paycheck.id, category="RSU", name=name, amount=amt)
+        )
+
     # Process nested "Deductions" groups (Taxes, Pre-Tax Benefits, Post-Tax Deductions)
     for sub_category, items_dict in parsed_data["Deductions"].items():
         for name, amt in items_dict.items():

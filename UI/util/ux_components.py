@@ -4,6 +4,9 @@ import streamlit as st
 import plotly.express as px
 import requests
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+from datetime import date
+from typing import Optional, Tuple
+import dateutil.relativedelta as rd
 import util.budget.services as services
 
 # --- 1. UNIFIED DATA FETCH LAYER ---
@@ -137,103 +140,123 @@ SCOPE_MATRIX = {
     }
 }
 
-from datetime import datetime, date
-import dateutil.relativedelta as rd
-import streamlit as st
-
 def render_global_filters(
-    key_prefix: str, 
-    show_account_picker: bool = False
-) -> tuple[date, date, str, str | None]:
+    key_prefix: str,
+    show_date_picker: bool = True,
+    show_scope_picker: bool = True,
+    show_account_picker: bool = False,
+) -> Tuple[Optional[date], Optional[date], Optional[str], Optional[str]]:
     """
-    Renders the Scope and Date Range pickers, an optional Account picker,
-    and a fully reactive preset dropdown for fast date ranges.
+    Renders customizable global filter components.
+    
+    Returns:
+        (start_date, end_date, selected_scope, selected_account)
+        Unselected/hidden pickers return None.
     """
     state_key = f"{key_prefix}_current_date_val"
     preset_key = f"{key_prefix}_date_preset_sel"
-    
     today = date.today()
 
-    # 1. Initialize session states safely
-    if state_key not in st.session_state:
-        st.session_state[state_key] = (date(2025, 1, 1), today)
-
-    # 2. Define the Callback for when the Preset Dropdown changes
-    def on_preset_change():
-        selected = st.session_state[preset_key]
-        if selected == "This Month":
-            st.session_state[state_key] = (today.replace(day=1), today)
-        elif selected == "Last Month":
-            first_of_this_month = today.replace(day=1)
-            last_month_end = first_of_this_month - rd.relativedelta(days=1)
-            last_month_start = last_month_end.replace(day=1)
-            st.session_state[state_key] = (last_month_start, last_month_end)
-        elif selected == "YTD":
-            st.session_state[state_key] = (date(today.year, 1, 1), today)
-        elif selected == "Last Year":
-            st.session_state[state_key] = (date(today.year - 1, 1, 1), date(today.year - 1, 12, 31))
-
-    # 3. Setup column layouts
+    # 1. Calculate active layout columns
+    active_cols = []
+    if show_date_picker:
+        active_cols.extend([1.2, 1.8])  # col_preset, col_datepicker
+    if show_scope_picker:
+        active_cols.append(1.5)        # col_scope
     if show_account_picker:
-        col_preset, col_datepicker, col_scope, col_bank = st.columns([1.2, 1.8, 1.5, 1.5])
-    else:
-        col_preset, col_datepicker, col_scope = st.columns([1.2, 1.8, 2.0])
-        col_bank = None
+        active_cols.append(1.5)        # col_account
 
-    # 4. Render Preset Dropdown with its callback attached
-    with col_preset:
-        presets = ["Custom", "This Month", "Last Month", "YTD", "Last Year"]
-        st.selectbox(
-            "Quick Range",
-            options=presets,
-            key=preset_key,
-            on_change=on_preset_change, # Triggers calculations immediately on selection
-            label_visibility="collapsed"
-        )
+    if not active_cols:
+        return None, None, None, None
 
-    # 5. Render Main Date Picker (Reading from state_key, NOT using a conflicting key string)
-    with col_datepicker:
-        selected_range = st.date_input(
-            "Time Range", 
-            value=st.session_state[state_key],
-            label_visibility="collapsed"
-        )
-        
-        # 6. Check if user manually interacted with the date picker bounds
-        if isinstance(selected_range, (tuple, list)) and len(selected_range) == 2:
-            start_date, end_date = selected_range
-            # If manual date picker value deviates from our state, revert dropdown to "Custom"
-            if (start_date, end_date) != st.session_state[state_key]:
-                st.session_state[preset_key] = "Custom"
-                st.session_state[state_key] = (start_date, end_date)
-        elif isinstance(selected_range, (tuple, list)) and len(selected_range) == 1:
-            start_date = selected_range[0]
-            end_date = today
-        else:
-            start_date, end_date = st.session_state[state_key]
+    cols = st.columns(active_cols)
+    col_idx = 0
 
-    # 7. Render Scope Dropdown
-    with col_scope:
-        selected_scope = st.selectbox(
-            "Scope", 
-            options=list(SCOPE_MATRIX.keys()), 
-            key=f"{key_prefix}_scope_filter_dropdown", 
-            label_visibility="collapsed"
-        )
-        
-    # 8. Render Optional Account Dropdown
-    selected_bank = None
-    if show_account_picker and col_bank is not None:
-        with col_bank:
-            banks = services.get_bank_names()
-            selected_bank = st.selectbox(
-                "Account", 
-                options=banks, 
-                key=f"{key_prefix}_dash_bank_sel",
-                label_visibility="collapsed"
+    # Initialize return variables
+    start_date, end_date = None, None
+    selected_scope = None
+    selected_account = None
+
+    # 2. Render Date Picker + Preset Dropdown
+    if show_date_picker:
+        col_preset = cols[col_idx]
+        col_datepicker = cols[col_idx + 1]
+        col_idx += 2
+
+        if state_key not in st.session_state:
+            st.session_state[state_key] = (date(2025, 1, 1), today)
+
+        def on_preset_change():
+            selected = st.session_state[preset_key]
+            if selected == "This Month":
+                st.session_state[state_key] = (today.replace(day=1), today)
+            elif selected == "Last Month":
+                first_of_this_month = today.replace(day=1)
+                last_month_end = first_of_this_month - rd.relativedelta(days=1)
+                last_month_start = last_month_end.replace(day=1)
+                st.session_state[state_key] = (last_month_start, last_month_end)
+            elif selected == "YTD":
+                st.session_state[state_key] = (date(today.year, 1, 1), today)
+            elif selected == "Last Year":
+                st.session_state[state_key] = (
+                    date(today.year - 1, 1, 1),
+                    date(today.year - 1, 12, 31),
+                )
+
+        with col_preset:
+            presets = ["Custom", "This Month", "Last Month", "YTD", "Last Year"]
+            st.selectbox(
+                "Quick Range",
+                options=presets,
+                key=preset_key,
+                on_change=on_preset_change,
+                label_visibility="collapsed",
             )
-            
-    return start_date, end_date, selected_scope, selected_bank
+
+        with col_datepicker:
+            selected_range = st.date_input(
+                "Time Range",
+                value=st.session_state[state_key],
+                label_visibility="collapsed",
+            )
+
+            if isinstance(selected_range, (tuple, list)) and len(selected_range) == 2:
+                start_date, end_date = selected_range
+                if (start_date, end_date) != st.session_state[state_key]:
+                    st.session_state[preset_key] = "Custom"
+                    st.session_state[state_key] = (start_date, end_date)
+            elif isinstance(selected_range, (tuple, list)) and len(selected_range) == 1:
+                start_date = selected_range[0]
+                end_date = today
+            else:
+                start_date, end_date = st.session_state[state_key]
+
+    # 3. Render Scope Picker
+    if show_scope_picker:
+        col_scope = cols[col_idx]
+        col_idx += 1
+        with col_scope:
+            selected_scope = st.selectbox(
+                "Scope",
+                options=list(SCOPE_MATRIX.keys()),
+                key=f"{key_prefix}_scope_filter_dropdown",
+                label_visibility="collapsed",
+            )
+
+    # 4. Render Account/Bank Picker
+    if show_account_picker:
+        col_account = cols[col_idx]
+        col_idx += 1
+        with col_account:
+            banks = services.get_bank_names()
+            selected_account = st.selectbox(
+                "Account",
+                options=banks,
+                key=f"{key_prefix}_dash_bank_sel",
+                label_visibility="collapsed",
+            )
+
+    return start_date, end_date, selected_scope, selected_account
 
 def generate_line_chart_df(expense_func, income_func, start_date=None, end_date=None) -> pd.DataFrame:
     """Fetches list logs from API, tags them, and combines them chronologically."""
