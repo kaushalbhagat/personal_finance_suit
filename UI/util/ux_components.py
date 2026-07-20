@@ -234,57 +234,6 @@ def render_global_filters(
             )
             
     return start_date, end_date, selected_scope, selected_bank
-# def render_global_filters(
-#     key_prefix: str, 
-#     show_account_picker: bool = False
-# ) -> tuple[str, datetime, datetime, str | None]:
-#     """
-#     Renders the Scope and Date Range pickers, and optionally an Account/Bank picker.
-    
-#     Returns:
-#         tuple: (selected_scope, start_date, end_date, selected_bank)
-#         Where selected_bank is None if show_account_picker is False.
-#     """
-#     if show_account_picker:
-#         col_datepicker, col_scope, col_bank  = st.columns(3) #st.columns([2.0, 2.0, 2.0], vertical_alignment="bottom")
-#     else:
-#         col_datepicker, col_scope = st.columns(2) #st.columns([2.2, 1.8], vertical_alignment="bottom")
-#         col_bank = None
-
-#     with col_datepicker:
-#         selected_range = st.date_input(
-#             "Time Range", 
-#             value=(datetime(2025, 1, 1), datetime.now()), 
-#             key=f"{key_prefix}_date_range_picker", 
-#             label_visibility="collapsed"
-#         )
-#         if isinstance(selected_range, (tuple, list)) and len(selected_range) == 2:
-#             start_date, end_date = selected_range
-#         else:
-#             start_date, end_date = datetime(2025, 1, 1), datetime.now()    
-
-#     with col_scope:
-#         selected_scope = st.selectbox(
-#             "Scope", 
-#             options=list(SCOPE_MATRIX.keys()), 
-#             key=f"{key_prefix}_scope_filter_dropdown", 
-#             label_visibility="collapsed"
-#         )
-        
-#     selected_bank = None
-#     if show_account_picker and col_bank is not None:
-#         with col_bank:
-#             # Fetch bank list dynamically from the passed-in services layer
-#             banks = services.get_bank_names()
-#             selected_bank = st.selectbox(
-#                 "Account", 
-#                 options=banks, 
-#                 key=f"{key_prefix}_dash_bank_sel",
-#                 label_visibility="collapsed"
-#             )
-            
-#     return start_date, end_date, selected_scope, selected_bank
-
 
 def generate_line_chart_df(expense_func, income_func, start_date=None, end_date=None) -> pd.DataFrame:
     """Fetches list logs from API, tags them, and combines them chronologically."""

@@ -76,6 +76,10 @@ class DailySnapshot(Base, table=True):
     unrealized_pnl: Decimal = Field(default=Decimal("0.00"), max_digits=18, decimal_places=2)
 
     account: Optional[Account] = Relationship()
+    holdings: List["SnapshotHolding"] = Relationship(
+            back_populates="snapshot",
+            sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+        )
 
 class SnapshotHolding(Base, table=True):
     __tablename__ = "snapshot_holdings"
@@ -84,6 +88,8 @@ class SnapshotHolding(Base, table=True):
     snapshot_id: int = Field(foreign_key="daily_snapshots.id")
     ticker: str = Field(max_length=10, index=True)
     quantity: Decimal = Field(max_digits=18, decimal_places=4)    
+
+    snapshot: Optional[DailySnapshot] = Relationship(back_populates="holdings")
 
 # 6. Current Positions Model
 class CurrentPosition(Base, table=True):
