@@ -1,7 +1,9 @@
-import copy
 import re
+import sys
 from pypdf import PdfReader
 import pprint
+from database.setup import get_paycheck_db
+from util.paycheck.save import save_paycheck_to_db
 
 paycheck_data = {
     "Pay Date": "",
@@ -124,10 +126,22 @@ def parse_paycheck(data_dict: dict, raw_text: str, current_section: str = None) 
                 
     return result
 
+def parse(path_to_file: str) -> str:
+    reader = PdfReader(path_to_file)
+    for page in reader.pages:
+        text = page.extract_text()
+        if text:
+            populated_paycheck_data = parse_paycheck(paycheck_data, text)
+            with get_paycheck_db() as session:
+                save_paycheck_to_db(populated_paycheck_data, session)
+
 
 if __name__ == "__main__":
-    pdf_file_path = "../../data/pay2.pdf" 
+    pdf_file_path = "data/pay2.pdf" 
+    if len(sys.argv) < 2:
+        print("Usage: python parser.py <file_path>")
+        sys.exit(1)
 
-    raw_text = extract_text_from_pdf(pdf_file_path)
-    populated_paycheck_data = parse_paycheck(paycheck_data, raw_text)
-    pprint.pprint(populated_paycheck_data)
+    path_to_file = sys.argv[1]
+
+    parse(f'data/{path_to_file}')

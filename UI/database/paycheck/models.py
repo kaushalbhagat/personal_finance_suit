@@ -31,4 +31,4 @@ class PaycheckLineItem(PaycheckBase, table=True):
     name: str                          # 'Regular Pay', 'Medical', etc.
     amount: Decimal = Field(max_digits=10, decimal_places=2)
     
-    paycheck: Paycheck = Relationship(back_populates="items")
+    paychecks: Paycheck = Relationship(back_populates="items")
