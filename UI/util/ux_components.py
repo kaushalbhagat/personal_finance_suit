@@ -147,7 +147,7 @@ def render_global_filters(
     show_account_picker: bool = False,
 ) -> Tuple[Optional[date], Optional[date], Optional[str], Optional[str]]:
     """
-    Renders customizable global filter components.
+    Renders customizable global filter components safely using Streamlit callbacks.
     
     Returns:
         (start_date, end_date, selected_scope, selected_account)
@@ -155,6 +155,7 @@ def render_global_filters(
     """
     state_key = f"{key_prefix}_current_date_val"
     preset_key = f"{key_prefix}_date_preset_sel"
+    date_input_key = f"{key_prefix}_date_picker_val"
     today = date.today()
 
     # 1. Calculate active layout columns
@@ -183,25 +184,41 @@ def render_global_filters(
         col_datepicker = cols[col_idx + 1]
         col_idx += 2
 
+        # Initialize session state defaults before widget rendering
         if state_key not in st.session_state:
             st.session_state[state_key] = (date(2025, 1, 1), today)
+        if date_input_key not in st.session_state:
+            st.session_state[date_input_key] = st.session_state[state_key]
 
+        # Callback triggered when user selects a Quick Range preset
         def on_preset_change():
             selected = st.session_state[preset_key]
             if selected == "This Month":
-                st.session_state[state_key] = (today.replace(day=1), today)
+                new_val = (today.replace(day=1), today)
             elif selected == "Last Month":
                 first_of_this_month = today.replace(day=1)
                 last_month_end = first_of_this_month - rd.relativedelta(days=1)
                 last_month_start = last_month_end.replace(day=1)
-                st.session_state[state_key] = (last_month_start, last_month_end)
+                new_val = (last_month_start, last_month_end)
             elif selected == "YTD":
-                st.session_state[state_key] = (date(today.year, 1, 1), today)
+                new_val = (date(today.year, 1, 1), today)
             elif selected == "Last Year":
-                st.session_state[state_key] = (
+                new_val = (
                     date(today.year - 1, 1, 1),
                     date(today.year - 1, 12, 31),
                 )
+            else:
+                return
+
+            st.session_state[state_key] = new_val
+            st.session_state[date_input_key] = new_val
+
+        # Callback triggered when user manually changes date input widget
+        def on_date_change():
+            selected_range = st.session_state[date_input_key]
+            if isinstance(selected_range, (tuple, list)) and len(selected_range) == 2:
+                st.session_state[preset_key] = "Custom"
+                st.session_state[state_key] = tuple(selected_range)
 
         with col_preset:
             presets = ["Custom", "This Month", "Last Month", "YTD", "Last Year"]
@@ -214,22 +231,22 @@ def render_global_filters(
             )
 
         with col_datepicker:
-            selected_range = st.date_input(
+            st.date_input(
                 "Time Range",
-                value=st.session_state[state_key],
+                key=date_input_key,
+                on_change=on_date_change,
                 label_visibility="collapsed",
             )
 
-            if isinstance(selected_range, (tuple, list)) and len(selected_range) == 2:
-                start_date, end_date = selected_range
-                if (start_date, end_date) != st.session_state[state_key]:
-                    st.session_state[preset_key] = "Custom"
-                    st.session_state[state_key] = (start_date, end_date)
-            elif isinstance(selected_range, (tuple, list)) and len(selected_range) == 1:
-                start_date = selected_range[0]
-                end_date = today
-            else:
-                start_date, end_date = st.session_state[state_key]
+        # Extract selected range safely for return statement
+        selected_range = st.session_state.get(date_input_key, st.session_state[state_key])
+        if isinstance(selected_range, (tuple, list)) and len(selected_range) == 2:
+            start_date, end_date = selected_range
+        elif isinstance(selected_range, (tuple, list)) and len(selected_range) == 1:
+            start_date = selected_range[0]
+            end_date = today
+        else:
+            start_date, end_date = st.session_state[state_key]
 
     # 3. Render Scope Picker
     if show_scope_picker:
