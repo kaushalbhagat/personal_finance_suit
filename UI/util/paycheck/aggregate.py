@@ -5,20 +5,18 @@ from sqlmodel import Session, select, func
 from sqlalchemy.orm import selectinload
 
 from database.paycheck.models import Paycheck, PaycheckLineItem
+from database.setup import get_paycheck_db
 
 
-def create_consolidated_paycheck(session: Session, paycheck_ids: List[int], start_date: date, end_date: date) -> Paycheck:
+def create_consolidated_paycheck(session: Session, start_date: date, end_date: date) -> Paycheck:
     """
     Executes aggregated queries over a list of paycheck IDs and constructs
     an unpersisted, consolidated 'Paycheck' object.
     """
-    if not paycheck_ids:
-        return Paycheck(pay_date=date.today(), net_pay=Decimal("0.00"), items=[])
 
     # 1. Aggregate net pay across the paychecks
     sum_net_pay_stmt = (
         select(func.sum(Paycheck.net_pay))
-        # .where(Paycheck.id.in_(paycheck_ids))
         .where(Paycheck.pay_date >= start_date)
         .where(Paycheck.pay_date <= end_date)         
     )
@@ -33,7 +31,6 @@ def create_consolidated_paycheck(session: Session, paycheck_ids: List[int], star
             func.sum(PaycheckLineItem.amount).label("total_amount")
         )
         .join(PaycheckLineItem, Paycheck.id == PaycheckLineItem.paycheck_id)
-        # .where(Paycheck.id.in_(paycheck_ids))
         .where(Paycheck.pay_date >= start_date)
         .where(Paycheck.pay_date <= end_date)         
         .group_by(PaycheckLineItem.category, PaycheckLineItem.name)
@@ -65,3 +62,9 @@ def create_consolidated_paycheck(session: Session, paycheck_ids: List[int], star
         net_pay=total_net_pay,
         items=consolidated_items
     )
+
+if __name__ == "__main__":
+    today = date.today()
+    with get_paycheck_db() as session:
+        paycheck = create_consolidated_paycheck(session, today.replace(day=1), today)
+        print(paycheck)

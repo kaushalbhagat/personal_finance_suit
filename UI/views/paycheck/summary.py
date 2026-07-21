@@ -78,6 +78,6 @@ def render_paycheck_dashboard(paycheck):
 with get_paycheck_db() as session:
 
     start_date, end_date, selected_scope, selected_bank = ux_components.render_global_filters(key_prefix="paycheck_summary", show_scope_picker=False)
-    paycheck = create_consolidated_paycheck(session, [2,3], start_date, end_date)
+    paycheck = create_consolidated_paycheck(session, start_date, end_date)
     render_paycheck_dashboard(paycheck)
 
