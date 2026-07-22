@@ -33,7 +33,7 @@ def render_cashflow_ui(cashflow: dict):
     business_exp = to_decimal(cashflow["Expenses"].get("Business", 0))
     total_expenses = personal_exp + business_exp
 
-    st.title("📊 Cash Flow Report")
+    # st.subheader("📊 Cash Flow Report")
     st.caption("Consolidated Personal & Business Financial Summary")
 
     # --- STEP 2: Top KPI Metric Cards ---

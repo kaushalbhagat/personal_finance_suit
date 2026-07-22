@@ -33,12 +33,10 @@ def render_paycheck_dashboard(paycheck):
     with col1:
         st.metric(label="Gross Pay", value=f"${gross_pay:,.2f}")
     with col2:
-        st.metric(label="RSU", value=f"${rsu_pay:,.2f}")        
+        st.metric(label="Total Deductions", value=f"${total_deductions:,.2f}") 
     with col3:
-        # Show deductions as a negative impact
-        st.metric(label="Total Deductions", value=f"${total_deductions:,.2f}")
+        st.metric(label="RSU after Tax", value=f"${rsu_pay:,.2f}")
     with col4:
-        # Net pay comes straight from the top-level model
         st.metric(label="Net Take-Home", value=f"${paycheck.net_pay:,.2f}")
         
     st.divider()

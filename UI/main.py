@@ -18,6 +18,7 @@ portfolio_accounts_page = st.Page("views/portfolio/accounts.py", title="Accounts
 portfolio_transaction_page = st.Page("views/portfolio/transactions.py", title="Transactions", icon=":material/settings:")
 
 paycheck_overview = st.Page("views/paycheck/summary.py", title="Summary", icon=":material/settings:")
+all_paychecks = st.Page("views/paycheck/all.py", title="All", icon=":material/settings:")
 
 # Initialize the navigation
 # pg = st.navigation([home_page, dashboard_page, settings_page]
@@ -25,7 +26,7 @@ pg = st.navigation({
     "Personal Finance Hub": [home_page, cashflow_page],
     "Budgeting": [dashboard_page, expense_page, income_page, accounts_page, category_management_page, mappings_management_page, institutes_management_page],
     "Portfolio": [portfolio_snapshot_page, portfolio_accounts_page, portfolio_transaction_page],
-    "Paycheck": [paycheck_overview]
+    "Paycheck": [paycheck_overview, all_paychecks]
 })
 
 
