@@ -218,3 +218,12 @@ def connect_new_bank(link_token):
             return res
     except Exception as e:
         st.error("Could not fetch a valid Link Token from backend service. Verify server connection status.")
+
+def delete_transaction(transaction_id):
+    try:
+        res = requests.delete(f"{BASE_URL}/transactions/{transaction_id}")
+        if res.status_code == 204:
+            return {"status": "success"}
+        return {"status": "error", "message": res.text}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

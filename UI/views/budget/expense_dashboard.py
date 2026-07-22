@@ -227,6 +227,25 @@ with side_col:
         with btn_col1: save_clicked = st.button("🚀 Save", use_container_width=True, key=f"tx_save_b_{target_id}")
         with btn_col2: cancel_clicked = st.button("❌ Close", use_container_width=True, key=f"tx_cncl_b_{target_id}")
             
+        st.divider()
+
+        # --- NEW: Delete Action Section with Confirmation ---
+        if st.checkbox("⚠️ Enable Delete Option", key=f"confirm_del_chk_{target_id}"):
+            if st.button("🗑️ Permanently Delete Transaction", type="primary", use_container_width=True, key=f"tx_del_b_{target_id}"):
+                try:
+                    delete_response = services.delete_transaction(target_id)
+                    if delete_response.get("status") == "success":
+                        st.toast("Transaction successfully deleted!", icon="🗑️")
+                        st.cache_data.clear()
+                        st.session_state.tx_reset_token += 1
+                        if "active_dock_id" in st.session_state:
+                            del st.session_state["active_dock_id"]
+                        st.rerun()
+                    else:
+                        st.error(f"Deletion failed: {delete_response.get("message")}")
+                except Exception as e:
+                    st.error(f"HTTP Delete Call Failed: {e}")            
+      
         if save_clicked:
             if not parent_cat:
                 st.error("Please pick a valid Category before applying changes.")

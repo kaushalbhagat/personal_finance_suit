@@ -157,3 +157,23 @@ async def get_transactions_total(
         "grand_total": total_sum,
         "breakdown": rows
     }
+
+@router.delete("/transactions/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_transaction(transaction_id: int, session: Session = Depends(get_session)):
+    """
+    Permanently deletes a transaction by ID.
+    Returns HTTP 204 No Content on success.
+    """
+    db_transaction = await session.get(Transaction, transaction_id)
+    
+    if not db_transaction:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Transaction with ID {transaction_id} not found."
+        )
+    
+    await session.delete(db_transaction)
+    await session.commit()
+    
+    # HTTP 204 responses must not return a body
+    return None
