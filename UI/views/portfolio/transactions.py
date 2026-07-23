@@ -97,7 +97,7 @@ with get_db() as session:
         st.subheader("Recent Ledger Entries")
         if not tx_df.empty:
             tx_df['total_value'] = tx_df['quantity'] * tx_df['price_per_share']
-            display_df = tx_df[['transaction_date', 'ticker', 'transaction_type', 'quantity', 'price_per_share', 'total_value']].sort_values(by='transaction_date', ascending=False)
+            display_df = tx_df[['transaction_date', 'account_name', 'ticker', 'transaction_type', 'quantity', 'price_per_share', 'total_value']].sort_values(by='transaction_date', ascending=False)
             
             # --- TICKER SEARCH FILTER ---
             search_ticker = st.text_input("🔍 Search Transaction for a Ticker...", key="tx_ticker_search").strip().upper()
@@ -113,6 +113,7 @@ with get_db() as session:
                     display_df,
                     column_config={
                         "transaction_date": "Date",
+                        "account_name": "Account",
                         "ticker": "Asset Ticker",
                         "transaction_type": "Action",
                         "quantity": st.column_config.NumberColumn("Shares", format="%.4f"),
