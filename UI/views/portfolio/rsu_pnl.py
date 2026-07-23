@@ -9,7 +9,7 @@ from database.setup import get_db
 
 
 with get_db() as session:
-    st.title("📊 Ticker Tax & PnL Analyzer (With Projected Liquidation)")
+    st.title("📊 Tax & PnL Analyzer")
     
     # # 1. Select Account & Ticker
     account = session.scalars(select(Account).where(
