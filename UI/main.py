@@ -14,6 +14,7 @@ mappings_management_page = st.Page("views/budget/mappings_management.py", title=
 institutes_management_page = st.Page("views/budget/institutes_management.py", title="Institutes", icon=":material/add_business:")
 
 portfolio_snapshot_page = st.Page("views/portfolio/snapshot.py", title="Overview", icon=":material/finance:")
+current_holdings_page = st.Page("views/portfolio/current_holdings.py", title="Current Holdings", icon=":material/finance:")
 portfolio_accounts_page = st.Page("views/portfolio/accounts.py", title="Accounts", icon=":material/account_balance:")
 portfolio_transaction_page = st.Page("views/portfolio/transactions.py", title="Transactions", icon=":material/settings:")
 rsu_pnl_page = st.Page("views/portfolio/rsu_pnl.py", title="RSU P&L", icon=":material/settings:")
@@ -26,7 +27,7 @@ all_paychecks = st.Page("views/paycheck/all.py", title="All", icon=":material/se
 pg = st.navigation({
     "Personal Finance Hub": [home_page, cashflow_page],
     "Budgeting": [dashboard_page, expense_page, income_page, accounts_page, category_management_page, mappings_management_page, institutes_management_page],
-    "Portfolio": [portfolio_snapshot_page, portfolio_accounts_page, portfolio_transaction_page, rsu_pnl_page],
+    "Portfolio": [portfolio_snapshot_page, current_holdings_page, portfolio_accounts_page, portfolio_transaction_page, rsu_pnl_page],
     "Paycheck": [paycheck_overview, all_paychecks]
 })
 
